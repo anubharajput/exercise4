@@ -1,88 +1,186 @@
 <script>
+import UserDetails from './UserDetails.vue';
 export default {
     data() {
         return {
             selectedRole: "",
+            userData: { email: "", password: "", role: "", skills: [], termsAccepted: false, ischecked: false },
             newSkill: '',
-            skills: [],
+            validateDetails: false,
             termsAccepted: false,
-            password: "",
             showPassword: false,
-            email:""
+            emailErrorMessage: null,
+            passwordErrorMessage: null,
+            roleErrorMessage: null,
+            skillErrorMessage: null,
+            termErrorMessage: null,
+            ischecked: false,
+            errorcheck: false,
+            showUserData: false,
+            editIndex:null
         }
     },
     methods: {
         addSkill() {
-            if (this.newSkill.trim() !== '') {
-                this.skills.push(this.newSkill.trim());
+            if(this.editIndex){
+                this.userData.skills.splice(index, 1, this.newSkill.trim());
                 this.newSkill = '';
+                 this.validateSkill();
+                 this.editIndex=null;
+            }else if (this.newSkill.trim() !== '') {
+                    this.userData.skills.push(this.newSkill.trim());
+                    this.newSkill = '';
+                    this.validateSkill();
             }
         },
         removeSkill(index) {
-            this.skills.splice(index, 1);
+            this.userData.skills.splice(index, 1);
+            this.validateSkill();
+        },
+        editSkill(index) {
+            this.newSkill=this.userData.skills[index];
+            this.editIndex=index;
         },
         checkComma(event) {
-            if (event.keyCode === 188 || event.key == "Enter") {
+            if (event.keyCode === 188 || event.key === "Enter") {
+                console.log("cvbn");
                 event.preventDefault();
                 this.addSkill();
             }
         },
         validateForm() {
-            this.validatePassword();
+            console.log("xcvbnm")
+            // e.preventDefault();
+            this.errorCheck = true;
             this.validateEmail();
+            this.validatePassword();
+            this.validateRole();
+            this.validateSkill();
+            this.validateTerms();
+            if (
+                this.emailErrorMessage === null &&
+                this.passwordErrorMessage === null &&
+                this.roleErrorMessage === null &&
+                this.skillErrorMessage === null &&
+                this.termErrorMessage === null
+            ) {
+                this.validateDetails = true;
+                this.errorCheck = false;
+            }
+
         },
-        viewPassword() {
-            this.showPassword = !this.showPassword;
-        },
-        validateEmail(){
-         if(/\S+@\S+\.\S+/.test(this.email))
-         console.log("Zxcvbnm,.")
+        validateEmail() {
+            if (this.userData.email === "")
+                this.emailErrorMessage = "Email is required"
+            else if (!this.validateEmailRegex(this.userData.email))
+                this.emailErrorMessage = "Please enter a valid email"
+            else
+                this.emailErrorMessage = null;
         },
         validatePassword() {
-            console.log(this.password)
-            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-            if (!regex.test(this.password)) {
-                console.log("oh");
+            if (this.userData.password === "")
+                this.passwordErrorMessage = "Password is Required"
+            else if (!this.validatePasswordRegex(this.userData.password)) {
+                this.passwordErrorMessage = "min 8 letters, at least a special Character, upper and lower case letters and a number"
+            } else
+                this.passwordErrorMessage = null;
+        },
+        validateRole() {
+            if (this.userData.role === "")
+                this.roleErrorMessage = "Please select a role"
+            else
+                this.roleErrorMessage = null;
+        },
+        validateSkill() {
+            if (this.userData.skills.length === 0) {
+                this.skillErrorMessage = "Please add minimum one skill";
             } else {
-                console.log('Password is valid');
+                this.skillErrorMessage = null;
             }
+        },
+        validateTerms() {
+            if (!this.userData.ischecked)
+                this.termErrorMessage = "Please accept Terms and Conditions";
+            else
+                this.termErrorMessage = null
+        },
+        validateEmailRegex(email) {
+            return String(email)
+                .toLowerCase()
+                .match(
+                    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                );
+        },
+        validatePasswordRegex(password) {
+            const regex = /^(?=.*\d)(?=.*[!@#$%^&])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+            return regex.test(password);
+        },
+        validateOnChange(event) {
+            if (this.errorCheck) {
+                this.validateForm(event);
+            }
+        },
+        userValidatedetails() {
+            // e.preventDefault();
+            console.log("fg");
+            if (this.validateDetails)
+                this.showUserData = true;
         }
     },
+    components: {
+        UserDetails
+    }
+    , updated() {
+
+    }
 }
 </script>
 <template>
-    <div class="input-feilds">
-        <label for="email" >EMAIL:</label>
-        <input type="text" name="" id="email" v-model="email">
+    <form class="input-feilds" @input="validateOnChange()">
+        <label for="email">EMAIL:</label>
+        <input type="text" name="" id="email" v-model="userData.email">
+        <div v-if="emailErrorMessage" class="error">
+            {{ emailErrorMessage }}
+        </div>
         <label for="password">PASSWORD:</label>
-        <input :type="showPassword ? 'text' : 'password'" id="password" v-model="password">
-        <div><input type="checkbox" id="checkbox" @click="viewPassword">Show Password</div>
+        <input :type="showPassword ? 'text' : 'password'" id="password" v-model="userData.password">
+        <div v-if="passwordErrorMessage" class="error">{{ passwordErrorMessage }}</div>
+        <div><input type="checkbox" id="checkbox" @click="showPassword = !showPassword">Show Password</div>
         <label for="role">SELECT ROLE:</label>
-        <select id="role" v-model="selectedRole">
+        <select id="role" v-model="userData.role" @change="validateOnChange">
             <option value="web-developer">Web Developer</option>
             <option value="web-designer">Web Designer</option>
         </select>
-        <p>You selected: {{ selectedRole }}</p>
+        <div v-if="roleErrorMessage" class="error">{{ roleErrorMessage }}</div>
         <label for="skills">SKILLS:</label>
         <input type="text" id="skills" v-model="newSkill" @keydown="checkComma">
         <ul>
-            <li v-for="(skill, index) in skills" :key="index" @click="removeSkill(index)">
-                {{ skill }}
+            <li v-for="(skill, index) in userData.skills" :key="index" @click="editSkill(index)">
+                {{ skill }} <span @click="removeSkill(index)" class="delete">x</span>
             </li>
         </ul>
+        <div v-if="skillErrorMessage" class="error">{{ skillErrorMessage }}</div>
 
         <label for="terms">
-            <input type="checkbox" id="terms" v-model="termsAccepted">
-            I accept the terms
+            <input type="checkbox" id="terms" v-model="termsAccepted" @click="userData.ischecked = !userData.ischecked">
+            I ACCEPT TERMS AND CONDITIONS
         </label>
-        <button @click="validateForm">Create an Account</button>
-    </div>
+        <div v-if="termErrorMessage" class="error">{{ termErrorMessage }}</div>
+        <button @click="(e) => { e.preventDefault(); validateForm(); userValidatedetails(); }">Create an
+            Account</button>
+
+    </form>
+    <UserDetails v-if="showUserData" :userData="userData" />
 </template>
 <style scoped>
 .input-feilds {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    width: 50%;
+    margin: auto;
+    border: 10px solid rgb(226, 218, 218);
+    padding: 20px;
 }
 
 #email,
@@ -115,6 +213,14 @@ ul li {
     cursor: pointer;
 }
 
+ul li .delete {
+    color: red;
+    size: 10px;
+    font-weight: bold;
+    font-family: sans-serif;
+    cursor: pointer;
+}
+
 button {
     background-color: rgb(7, 7, 228);
     color: white;
@@ -136,5 +242,9 @@ label {
     font-size: 13px;
     font-weight: 600;
     color: rgb(76, 76, 76)
+}
+
+.error {
+    color: red;
 }
 </style>

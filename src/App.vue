@@ -15,9 +15,8 @@ export default {
 
 <style scoped>
 .container {
-    width: 50%;
-    margin: auto;
-    border: 10px solid rgb(226, 218, 218);
-    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap:20px;
     }
 </style>
